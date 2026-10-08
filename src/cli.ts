@@ -79,10 +79,11 @@ function parseArgs(argv: string[]): Args {
 }
 
 function printHelp(): void {
-  console.log(`playwright-search — multi-engine human-paced web search + page extraction
+  console.log(`quarry — multi-engine human-paced web search + page extraction
+(also installed as bpm-pull and playwright-search)
 
 Usage:
-  playwright-search "your query" [options]
+  quarry "your query" [options]
 
 Search options:
   -e, --engines <list>   Comma-separated: ddg,brave,bing,google (default: all)
@@ -92,19 +93,19 @@ Search options:
   -h, --help             Show this help
 
 Output:
-      --json             Emit JSON (required for --enrich)
+      --json             Emit JSON (default: human-readable text)
 
 Enrichment (fetch + extract page content with Mozilla Readability):
-      --enrich           Fetch each result URL, extract main content, return enriched JSON
+      --enrich           Fetch each result URL and extract main content
       --enrich-top <N>   Only enrich top N (after dedup); default: --top
       --concurrency <N>  Parallel page fetches (default: 3)
       --no-cache         Skip the 24h disk cache at ~/.playwright-search/cache/
       --no-robots        Skip robots.txt checks (impolite — default: respect robots)
 
 Examples:
-  playwright-search "rust async runtime"
-  playwright-search "wcag 2.2 changes" --engines ddg,brave -n 5 --headless
-  playwright-search "claude api caching" --enrich --enrich-top 5 --headless > out.json
+  quarry "rust async runtime"
+  quarry "wcag 2.2 changes" --engines ddg,brave -n 5 --headless
+  quarry "claude api caching" --enrich --enrich-top 5 --headless --json > out.json
 `);
 }
 
