@@ -88,6 +88,8 @@ Project-level: add `.mcp.json` at the repo root:
 }
 ```
 
+This repo ships its own `.mcp.json` that runs the local build: `"args": ["${CLAUDE_PROJECT_DIR:-.}/dist/mcp.js"]`. Run `npm run build` first (`dist/` is not committed). Claude Code expands `${VAR:-default}` in `.mcp.json`; `CLAUDE_PROJECT_DIR` is set only in the spawned server's environment, so the `:-.` default is what applies and the path resolves against the directory Claude Code was started in — start it from the repo root. In another project, use an absolute path to your quarry checkout as above.
+
 User-level (all projects): add to `~/.claude.json` or via `claude mcp add playwright-search node /path/to/quarry/dist/mcp.js`.
 
 ## Recommended pairing: register the memory MCP alongside
