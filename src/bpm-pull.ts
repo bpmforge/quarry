@@ -13,6 +13,8 @@
 // thin content — callers must fall back to the Playwright fetcher (fetchAndExtract) for those.
 // pullToMarkdown() returns "" on failure so those callers degrade rather than throwing.
 
+import { canFetch } from "./fetch/robots.js";
+
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
@@ -37,11 +39,24 @@ export async function paceFor(
   lastFetchAt.set(hostname, Date.now());
 }
 
-// Paced, size-guarded fetch. Returns raw bytes + Content-Type (decode is a separate step).
+export class RobotsDisallowedError extends Error {
+  constructor(readonly url: string) {
+    super(`robots.txt disallows ${url}`);
+    this.name = "RobotsDisallowedError";
+  }
+}
+
+// Paced, robots-checked, size-guarded fetch. Returns raw bytes + Content-Type (decode is a
+// separate step). Every redirect hop is checked against its own host's robots.txt, because
+// an allowed URL can redirect into a disallowed one.
 export async function get(
   url: string,
   redirects = 5,
+  opts: { respectRobots?: boolean } = {},
 ): Promise<{ buf: Buffer; contentType: string }> {
+  const respectRobots = opts.respectRobots ?? true;
+  if (respectRobots && !(await canFetch(url)))
+    throw new RobotsDisallowedError(url);
   await paceFor(new URL(url).hostname);
   const res = await fetch(url, {
     headers: {
@@ -53,7 +68,7 @@ export async function get(
   });
   if ([301, 302, 307, 308].includes(res.status) && redirects > 0) {
     const loc = res.headers.get("location");
-    if (loc) return get(new URL(loc, url).href, redirects - 1);
+    if (loc) return get(new URL(loc, url).href, redirects - 1, opts);
   }
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
 
@@ -242,12 +257,15 @@ export function toMarkdown(html: string): string {
 }
 
 // The public entry point: url -> clean markdown via our own pull. `raw` skips main-content
-// extraction, keeping every link on the page.
+// extraction, keeping every link on the page. robots.txt is respected unless the caller
+// opts out, matching fetchAndExtract's default.
 export async function pull(
   url: string,
-  opts: { raw?: boolean } = {},
+  opts: { raw?: boolean; respectRobots?: boolean } = {},
 ): Promise<string> {
-  const { buf, contentType } = await get(url);
+  const { buf, contentType } = await get(url, 5, {
+    respectRobots: opts.respectRobots,
+  });
   const charset = sniffCharset(buf, contentType);
   const html = stripBoilerplate(decodeBody(buf, charset));
   return toMarkdown(opts.raw ? html : extractMain(html));
@@ -256,11 +274,13 @@ export async function pull(
 /**
  * `pull` that degrades to "" instead of throwing. Callers treat empty as "thin
  * content" and fall back to the Playwright fetcher, so a Cloudflare-blocked or
- * JS-only page becomes a fallback rather than a hard failure.
+ * JS-only page becomes a fallback rather than a hard failure. A robots-disallowed
+ * URL also comes back "", and the fallback (fetchAndExtract) then reports it as
+ * skipped for robots.
  */
 export async function pullToMarkdown(
   url: string,
-  opts: { raw?: boolean } = {},
+  opts: { raw?: boolean; respectRobots?: boolean } = {},
 ): Promise<string> {
   try {
     return await pull(url, opts);
