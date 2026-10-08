@@ -1,17 +1,17 @@
 # Integration guide
 
-How to consume `playwright-search` from your other projects (Jarvis, claude-experts, bpm-opencode-experts, ai-daytrader, …). Three integration modes ordered by ease.
+How to consume Quarry (`@bpmforge/quarry`) from your other projects (Jarvis, claude-experts, bpm-opencode-experts, ai-daytrader, …). Three integration modes ordered by ease.
 
 ## 1. CLI (works from anywhere)
 
-Easiest. Subprocess from any language. Always-fresh JSON.
+Easiest. Subprocess from any language. Always-fresh JSON. After `npm run build`, run `node dist/cli.js`, or `npm link` to put the `quarry` bin (aliases `bpm-pull`, `playwright-search`) on your PATH.
 
 ```bash
-# Search only (top 10 from all engines, dedup'd via JSON output)
-playwright-search "your query" --json
+# Search only (top 10 per engine, all four engines; one entry per engine run, not deduplicated)
+quarry "your query" --json
 
 # Search + fetch + extract (enrichment pipeline)
-playwright-search "your query" --enrich --enrich-top 5 --headless --json
+quarry "your query" --enrich --enrich-top 5 --headless --json
 ```
 
 Output for `--enrich --json`:
@@ -46,7 +46,7 @@ Output for `--enrich --json`:
 Import directly. No subprocess overhead, full type safety.
 
 ```ts
-import { searchAndFetch, search, searchAll } from "playwright-search";
+import { searchAndFetch, search, searchAll } from "@bpmforge/quarry";
 
 // Highest-level: search + fetch + extract in one call
 const enriched = await searchAndFetch("rust async runtime", {
@@ -68,23 +68,23 @@ for (const r of enriched) {
 const ddgOnly = await search("rust async", "ddg", { top: 5 });
 ```
 
-For Jarvis/claude-experts (already npm-based) this is the cleanest path. Add to `package.json`:
+For Jarvis/claude-experts (already npm-based) this is the cleanest path. The package is not on npm; clone it next to your project, run `npm install && npm run build` there (the package resolves to `dist/`, which is not committed), then add to `package.json`:
 
 ```json
-{ "dependencies": { "playwright-search": "file:../playwright-search" } }
+{ "dependencies": { "@bpmforge/quarry": "file:../quarry" } }
 ```
-
-(Or push to a Gitea repo and reference it via git URL.)
 
 ## 3. MCP (built — see [MCP.md](./MCP.md))
 
-The `playwright-search-mcp` binary speaks the standard MCP stdio protocol. Three tools:
+The `quarry-mcp` binary (alias `playwright-search-mcp`) speaks the standard MCP stdio protocol. Five tools:
 
 ```
 tools:
-  - web_research(query, top?, engines?, max_chars_per_source?, relevance_query?)
-  - web_search(query, limit?, engines?)
+  - web_research(query, top?, engines?, max_chars_per_source?, relevance_query?, headless?)
+  - web_search(query, limit?, engines?, headless?)
   - web_fetch(url, max_chars?, no_cache?, relevance_query?)
+  - web_search_pullmd(query, limit?)
+  - web_research_pullmd(query, top?, max_chars_per_source?, relevance_query?)
 ```
 
 This is the path for opencode + Claude Code: register the MCP server in `opencode.json` or `.mcp.json`, every agent in the project gets the tools as native function calls — no subprocess plumbing. See `MCP.md` for setup commands and config snippets.
@@ -106,7 +106,7 @@ Build only if you find a host that needs it.
 ## How each existing project consumes this
 
 ### bpm-opencode-experts → all agents
-The MCP is registered in `examples/opencode.json`. Every agent in the project (researcher, coding-agent, security-auditor, api-designer, etc.) can call `web_research`, `web_search`, `web_fetch` — see `agents/shared/RESEARCH_TOOLS.md` for the shared reference doc agents read at runtime.
+The MCP is registered in `examples/opencode.json`. Every agent in the project (researcher, coding-agent, security-auditor, api-designer, etc.) can call all five tools — see `agents/shared/RESEARCH_TOOLS.md` for the shared reference doc agents read at runtime.
 
 The researcher agent uses these tools by default and runs an iterative loop (pass 1 broad → pass 2+ refined). Other agents reach for them on demand: e.g., security-auditor for CVE lookups, coding-agent before adopting a new library, api-designer for current REST/GraphQL standards.
 
@@ -118,7 +118,7 @@ Already Node. Use the **library** path:
 
 ```ts
 // In src/services/research.service.ts (or wherever)
-import { searchAndFetch } from "playwright-search";
+import { searchAndFetch } from "@bpmforge/quarry";
 
 export async function deepResearch(query: string) {
   const sources = await searchAndFetch(query, {
@@ -146,7 +146,7 @@ On-demand. Library when Node, CLI otherwise.
 ## Operational notes for downstream consumers
 
 - **First run is slow** (8–30s for full enrichment of 5 pages). **Cached runs are fast** (<2s). Show a progress indicator or stream results.
-- **Cache lives at** `~/.playwright-search/cache/<hash>.json`. Wipe it with `rm -rf ~/.playwright-search/cache`.
+- **Cache lives at** `~/.playwright-search/cache/<first 2 hex chars>/<sha1 of url>.json`. Wipe it with `rm -rf ~/.playwright-search/cache`.
 - **Profile lives at** `~/.playwright-search/profile/`. Persistent Chromium profile — DON'T delete unless you want to lose accumulated cookies/consent state.
 - **Headless caveats:** Google still trips a captcha headless. Use `--headless` only with `--engines ddg,brave,bing`, OR run headed (default) to also get Google.
 - **Rate limits are process-local.** Two parallel processes won't share cooldowns. If you need shared rate limit, lift `domainLimit.ts` state into Redis/SQLite (step 3 candidate).
