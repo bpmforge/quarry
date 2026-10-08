@@ -92,7 +92,7 @@ function hostname(url: string): string {
   }
 }
 
-const server = new McpServer({ name: "playwright-search", version: "0.1.0" });
+const server = new McpServer({ name: "playwright-search", version: "0.4.0" });
 
 server.registerTool(
   "web_research",
@@ -371,9 +371,10 @@ server.registerTool(
     description:
       "Step 2 — full content after web_search_pullmd has identified candidate URLs. " +
       "Rank-fused multi-engine SERP + full-page fetch via our own zero-dep pull + BM25 " +
-      "paragraph ranking. Automatically falls back to Playwright (fetchAndExtract) for any URL " +
-      "where the fast pull returns < 500 chars (JS-heavy SPAs, auth walls, Cloudflare). " +
-      "Each source annotated 'fetch: pull' or 'fetch: playwright fallback'. " +
+      "paragraph ranking. Any URL where the fast pull returns < 500 chars (or that has a " +
+      "site-API adapter: Wikipedia, arXiv, Stack Exchange, GitHub, npm) goes through the full " +
+      "fetch path instead (site API, else HTTP fetch + Readability). " +
+      "Each source annotated 'fetch: pull', 'fetch: direct fetch', 'fetch: <adapter> api' or 'fetch: snippet only'. " +
       "Escalate to web_research only if this returns < 2 useful sources.",
     inputSchema: {
       query: z.string().describe("The search query"),
