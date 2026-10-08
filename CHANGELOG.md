@@ -23,6 +23,7 @@ Changes on `main` since the `v0.4.0` tag. Version in `package.json` is still 0.4
 - URL dedup no longer lowercases the path, and `/x/?a=1` and `/x?a=1` now merge.
 - robots.txt: only the group naming us, or the `*` group, applies. Before, every crawler's group applied, so Wikipedia's `Disallow: /` for MJ12bot blocked every Wikipedia article. End-anchored rules (`/*.pdf$`) now match.
 - `bpm-pull` keeps protocol-relative links (`//host/path`).
+- CLI `--debug` now does what its help says: it forces a visible browser, overriding `--headless`. It was parsed and then ignored.
 - `web_research_pullmd`'s fast pull (`src/bpm-pull.ts`) now checks robots.txt before every page fetch and redirect hop, as `fetchAndExtract` already did. It skipped the check before.
 
 ### Removed

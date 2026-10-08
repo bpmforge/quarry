@@ -70,6 +70,9 @@ function parseArgs(argv: string[]): Args {
       positional.push(a);
     }
   }
+  // --debug forces a visible browser even alongside --headless. Without
+  // either flag the browser is already headed.
+  if (args.debug) args.headless = false;
   args.query = positional.join(" ");
   if (!args.query) {
     printHelp();
@@ -89,7 +92,7 @@ Search options:
   -e, --engines <list>   Comma-separated: ddg,brave,bing,google (default: all)
   -n, --top <N>          Top N results per engine (default: 10)
       --headless         Run Chromium headless (default: headed)
-      --debug            Keep the browser visible
+      --debug            Force a visible (headed) browser; overrides --headless
   -h, --help             Show this help
 
 Output:

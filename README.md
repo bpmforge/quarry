@@ -61,6 +61,8 @@ After `npm run build`, the same CLI is `node dist/cli.js` (installed as the `qua
 
 Flags: `-e/--engines <list>`, `-n/--top <N>`, `--json`, `--headless`, `--debug`, `-h/--help`.
 
+Engines try plain HTTP first and launch Chromium only when that fails. The browser is headed by default; `--headless` hides it, and `--debug` forces it visible even when `--headless` is also given.
+
 ### Enrichment (search + fetch + extract)
 
 ```bash
