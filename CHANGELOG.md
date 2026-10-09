@@ -2,6 +2,34 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Changes on `main` since the `v0.4.0` tag. Version in `package.json` is still 0.4.0.
+
+### Added
+
+- **Site-API source adapters** (`src/sources/`) for Wikipedia (and other Wikimedia wikis), arXiv, Stack Exchange, GitHub repos and npm packages. `fetchAndExtract` uses the site's API instead of scraping its HTML when an adapter matches, and falls back to the normal fetch path when the API declines or fails. Opt out with `useSources: false`; `FetchResult.source` names the adapter that served the content.
+- **`src/fuse.ts`** — one shared cross-engine merge that ranks by Reciprocal Rank Fusion, replacing three drifted dedupe copies in `pipeline.ts`, `mcp.ts` and `pullmd-serp.ts`.
+
+### Changed
+
+- `web_search_pullmd` / `web_research_pullmd` now get SERP results from the engine adapters (DDG, Brave, Bing; HTTP-first, browser fallback). Google is no longer in that engine set.
+- Extracted text keeps paragraph breaks (derived from the article HTML rather than Readability's flattened `textContent`), so BM25 paragraph ranking actually selects paragraphs instead of head-truncating.
+- `web_research_pullmd` labels a thin-pull retry `fetch: direct fetch` (was `playwright fallback`; that path never used Playwright).
+
+### Fixed
+
+- Ranking now uses each engine's own result position. Before, a single-engine result at #10 could outrank another engine's #1.
+- URL dedup no longer lowercases the path, and `/x/?a=1` and `/x?a=1` now merge.
+- robots.txt: only the group naming us, or the `*` group, applies. Before, every crawler's group applied, so Wikipedia's `Disallow: /` for MJ12bot blocked every Wikipedia article. End-anchored rules (`/*.pdf$`) now match.
+- `bpm-pull` keeps protocol-relative links (`//host/path`).
+- CLI `--debug` now does what its help says: it forces a visible browser, overriding `--headless`. It was parsed and then ignored.
+- `web_research_pullmd`'s fast pull (`src/bpm-pull.ts`) now checks robots.txt before every page fetch and redirect hop, as `fetchAndExtract` already did. It skipped the check before.
+
+### Removed
+
+- `src/pullmd-serp.ts`, the markdown-scraping SERP layer. It returned 0 results.
+
 ## [0.4.0] — 2026-07-16
 
 **Renamed to Quarry** — promoted from an infra utility to a named bpmforge product. npm package is now `@bpmforge/quarry` (was `playwright-search`, never published), repo `bpmforge/quarry`. Positioning: agent-grade self-hosted web retrieval (multi-engine search + fetch→clean-markdown), a companion to Lodestone (code retrieval). New `quarry` / `quarry-mcp` bins. **`bpm-pull`, `playwright-search`, and `playwright-search-mcp` bins retained as aliases**, and the `playwright-search` MCP server name is unchanged, so existing integrations (expert system, amplifier) keep working with no migration. No behavior change.

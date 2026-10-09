@@ -3,9 +3,7 @@
     "playwright-search": {
       "type": "stdio",
       "command": "node",
-      "args": [
-        "/Users/bmatthews/Code/playwright-search/dist/mcp.js"
-      ],
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/dist/mcp.js"],
       "env": {}
     }
   }
