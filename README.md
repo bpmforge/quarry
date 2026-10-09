@@ -170,3 +170,7 @@ tests/               # vitest unit tests (npm test)
 - **Brave snippets**: selectors track current Svelte build (`.title.search-snippet-title`, `.generic-snippet .content`); will need re-targeting if Brave reskins the SERP.
 - **Bing snippet truncation**: Bing serves "…" truncated snippets; we don't expand them.
 - **Rate limit is process-local**: `lastCall` is in-memory, so multiple parallel processes won't share cooldowns. Move to a file/Redis lock for step 2 if needed.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
