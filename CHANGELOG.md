@@ -4,17 +4,23 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
-Changes on `main` since the `v0.4.0` tag. Version in `package.json` is still 0.4.0.
+## [0.5.0] — 2026-10-15
+
+First release published to npm as `@bpmforge/quarry`. Site-API sources, Reciprocal Rank Fusion across engines, and robots.txt fixes.
 
 ### Added
 
 - **Site-API source adapters** (`src/sources/`) for Wikipedia (and other Wikimedia wikis), arXiv, Stack Exchange, GitHub repos and npm packages. `fetchAndExtract` uses the site's API instead of scraping its HTML when an adapter matches, and falls back to the normal fetch path when the API declines or fails. Opt out with `useSources: false`; `FetchResult.source` names the adapter that served the content.
+- npm packaging: the tarball now ships only `dist/` (no source maps), the docs and the licence, with `repository`, `homepage`, `bugs` and `keywords` set. `prepublishOnly` runs lint, tests and build.
+- GitHub Actions: `ci.yml` runs lint, tests and build on pushes and pull requests; `release.yml` publishes to npm with provenance when a `v*` tag is pushed.
 - **`src/fuse.ts`** — one shared cross-engine merge that ranks by Reciprocal Rank Fusion, replacing three drifted dedupe copies in `pipeline.ts`, `mcp.ts` and `pullmd-serp.ts`.
 
 ### Changed
 
 - `web_search_pullmd` / `web_research_pullmd` now get SERP results from the engine adapters (DDG, Brave, Bing; HTTP-first, browser fallback). Google is no longer in that engine set.
 - Extracted text keeps paragraph breaks (derived from the article HTML rather than Readability's flattened `textContent`), so BM25 paragraph ranking actually selects paragraphs instead of head-truncating.
+- The MCP server reads its reported version from `package.json` instead of a hard-coded string.
+- `postinstall` no longer fails the whole install when the Chromium download fails (offline, proxy, CI). It prints how to install Chromium later; the HTTP engines and fetch path work without it.
 - `web_research_pullmd` labels a thin-pull retry `fetch: direct fetch` (was `playwright fallback`; that path never used Playwright).
 
 ### Fixed
