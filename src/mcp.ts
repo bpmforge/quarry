@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createRequire } from "node:module";
 import { z } from "zod";
 import { searchAndFetch, type EnrichedResult } from "./pipeline.js";
 import { fetchAndExtract } from "./fetch/fetcher.js";
@@ -92,7 +93,10 @@ function hostname(url: string): string {
   }
 }
 
-const server = new McpServer({ name: "playwright-search", version: "0.4.0" });
+// package.json sits one level up from both src/ (tsx) and dist/ (built).
+const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
+
+const server = new McpServer({ name: "playwright-search", version });
 
 server.registerTool(
   "web_research",

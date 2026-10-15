@@ -33,7 +33,17 @@ For consuming this from opencode, Claude Code, Jarvis, claude-experts, bpm-openc
 
 ## Install
 
-Not published to npm — install from source:
+From npm (Node ≥ 20):
+
+```bash
+npm install -g @bpmforge/quarry   # quarry and quarry-mcp on your PATH
+# or run without installing
+npx -y -p @bpmforge/quarry quarry-mcp
+```
+
+`npm install` runs `playwright install chromium` (postinstall). If that download fails the install still succeeds; run `npx playwright install chromium` later to enable the browser fallback.
+
+From source:
 
 ```bash
 git clone https://github.com/bpmforge/quarry.git
@@ -41,8 +51,6 @@ cd quarry
 npm install
 npm run build   # emits dist/ (cli.js, mcp.js, index.js)
 ```
-
-`npm install` runs `playwright install chromium` (postinstall). Requires Node ≥ 20.
 
 ## CLI
 
